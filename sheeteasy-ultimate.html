@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SheetEasy - AI Spreadsheet Generator</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="/manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e3c72;
+            --light-bg: #f9fafb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .nav {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .streak {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .credits {
+            background: var(--success);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .view {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .view.active { display: block; }
+
+        /* Typography */
+        h1 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        /* Templates Grid */
+        .templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .template {
+            background: white;
+            border: 3px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .template:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .template-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .template-title {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.05em;
+        }
+
+        .template-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--warning);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        /* Spreadsheet Grid */
+        .spreadsheet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .sheet-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .sheet-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .sheet-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--dark);
+            flex: 1;
+        }
+
+        .version-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .sheet-meta {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sheet-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .sheet-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .sheet-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sheet-btn.download {
+            background: var(--success);
+            color: white;
+        }
+
+        .sheet-btn.edit {
+            background: var(--warning);
+            color: white;
+        }
+
+        .sheet-btn.share {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sheet-btn.versions {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .sheet-btn.delete {
+            background: var(--danger);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        /* Analytics Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        /* Achievements */
+        .achievements {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .achievement {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .achievement.unlocked {
+            border-color: #fbbf24;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+
+        .achievement.locked {
+            opacity: 0.5;
+        }
+
+        .achievement-icon {
+            font-size: 3em;
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .achievement-desc {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #f3f4f6;
+        }
+
+        /* Onboarding */
+        .onboarding-step {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .onboarding-icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+        }
+
+        .onboarding-title {
+            font-size: 2em;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .onboarding-desc {
+            color: #6b7280;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .onboarding-progress {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            transition: all 0.3s;
+        }
+
+        .progress-dot.active {
+            background: var(--primary);
+            width: 30px;
+            border-radius: 6px;
+        }
+
+        /* Formula Builder */
+        .formula-options {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .formula-option {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .formula-option:hover {
+            border-color: var(--primary);
+            background: #f0f9ff;
+        }
+
+        .formula-option.selected {
+            border-color: var(--primary);
+            background: #dbeafe;
+        }
+
+        /* Theme Selector */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .theme-option {
+            padding: 30px 20px;
+            border: 3px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .theme-option:hover {
+            transform: translateY(-3px);
+        }
+
+        .theme-option.selected {
+            border-color: var(--primary);
+        }
+
+        .theme-blue { background: linear-gradient(135deg, #3b82f6, #1e40af); color: white; }
+        .theme-green { background: linear-gradient(135deg, #10b981, #047857); color: white; }
+        .theme-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
+        .theme-orange { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading.active { display: flex; }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 5px solid #f3f4f6;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            max-width: 400px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-title {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .notification-body {
+            color: #6b7280;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .view { padding: 20px; }
+            .modal-content { padding: 20px; }
+            h1 { font-size: 1.8em; }
+            .templates { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .nav-right { flex-wrap: wrap; }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: #f0f9ff;
+            border: 3px solid #38bdf8;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 15px;
+        }
+
+        #user-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #bae6fd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        /* Learning Center */
+        .tips-carousel {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .tip-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .tip-text {
+            color: #92400e;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .tip-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tip-btn {
+            background: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        /* Share Modal */
+        .share-link {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .share-link input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 1em;
+            padding: 5px;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="nav">
+        <div class="logo">
+            <span>📊</span> SheetEasy
+        </div>
+        <div class="nav-right">
+            <div class="streak" id="streak">🔥 0 day streak</div>
+            <div class="credits">✨ <span id="credits">3</span> credits</div>
+            <button class="upgrade-btn" onclick="showUpgrade()">⚡ Upgrade to Pro</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create')">✨ Create</button>
+            <button class="tab" onclick="switchTab('saved')">📁 My Sheets (<span id="count">0</span>)</button>
+            <button class="tab" onclick="switchTab('analytics')">📊 Analytics</button>
+            <button class="tab" onclick="switchTab('learning')">🎓 Learn</button>
+        </div>
+
+        <!-- CREATE VIEW -->
+        <div id="create-view" class="view active">
+            <h1>Create Your Perfect Spreadsheet</h1>
+            <p class="subtitle">Choose a template or describe what you need - we'll build it instantly!</p>
+
+            <div class="input-section">
+                <div class="input-label">💬 What do you want to track? (optional)</div>
+                <textarea 
+                    id="user-input" 
+                    placeholder="Example: I want to track my monthly expenses including rent, groceries, utilities, and entertainment..."
+                ></textarea>
+            </div>
+
+            <h2 style="color: var(--dark); margin-bottom: 20px;">📋 Popular Templates</h2>
+
+            <div class="templates">
+                <div class="template" onclick="createFromTemplate('budget')">
+                    <div class="template-badge">NEW</div>
+                    <div class="template-icon">💵</div>
+                    <div class="template-title">Budget Tracker</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('workout')">
+                    <div class="template-icon">🏋️</div>
+                    <div class="template-title">Workout Log</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('meal')">
+                    <div class="template-icon">🍽️</div>
+                    <div class="template-title">Meal Planner</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('habits')">
+                    <div class="template-icon">✅</div>
+                    <div class="template-title">Habit Tracker</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('expense')">
+                    <div class="template-icon">💳</div>
+                    <div class="template-title">Expense Report</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('inventory')">
+                    <div class="template-icon">📦</div>
+                    <div class="template-title">Inventory</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('goals')">
+                    <div class="template-icon">🎯</div>
+                    <div class="template-title">Goal Tracker</div>
+                </div>
+                <div class="template" onclick="createFromTemplate('subscription')">
+                    <div class="template-icon">📱</div>
+                    <div class="template-title">Subscriptions</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateCustom()">
+                🚀 Create Custom Spreadsheet
+            </button>
+        </div>
+
+        <!-- SAVED VIEW -->
+        <div id="saved-view" class="view">
+            <h1>My Spreadsheets</h1>
+            <p class="subtitle">All your spreadsheets with version history and sharing</p>
+            <div id="sheets-list"></div>
+        </div>
+
+        <!-- ANALYTICS VIEW -->
+        <div id="analytics-view" class="view">
+            <h1>Your Analytics Dashboard</h1>
+            <p class="subtitle">Track your productivity and unlock achievements</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-created">0</div>
+                    <div class="stat-label">Total Created</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="this-week">0</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="most-used"></div>
+                    <div class="stat-label">Most Used</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="streak-count">0</div>
+                    <div class="stat-label">Day Streak 🔥</div>
+                </div>
+            </div>
+
+            <h2 style="color: var(--dark); margin: 30px 0 20px 0;">🏆 Achievements</h2>
+            <div class="achievements" id="achievements"></div>
+        </div>
+
+        <!-- LEARNING VIEW -->
+        <div id="learning-view" class="view">
+            <h1>Learning Center</h1>
+            <p class="subtitle">Tips and tricks to get the most out of SheetEasy</p>
+
+            <div class="tips-carousel">
+                <div class="tip-icon">💡</div>
+                <div class="tip-text" id="tip-text"></div>
+                <div class="tip-nav">
+                    <button class="tip-btn" onclick="previousTip()">← Previous</button>
+                    <button class="tip-btn" onclick="nextTip()">Next →</button>
+                </div>
+            </div>
+
+            <h2 style="color: var(--dark); margin: 30px 0 20px 0;">📚 Quick Guides</h2>
+            <div class="templates">
+                <div class="template" onclick="showGuide('getting-started')">
+                    <div class="template-icon">🚀</div>
+                    <div class="template-title">Getting Started</div>
+                </div>
+                <div class="template" onclick="showGuide('formulas')">
+                    <div class="template-icon">📐</div>
+                    <div class="template-title">Adding Formulas</div>
+                </div>
+                <div class="template" onclick="showGuide('sharing')">
+                    <div class="template-icon">🤝</div>
+                    <div class="template-title">Sharing Sheets</div>
+                </div>
+                <div class="template" onclick="showGuide('import')">
+                    <div class="template-icon">📥</div>
+                    <div class="template-title">Import Data</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Modal -->
+    <div class="modal" id="onboarding-modal">
+        <div class="modal-content">
+            <div class="onboarding-step" id="onboarding-content"></div>
+            <div class="onboarding-progress" id="onboarding-progress"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">✏️ Edit Spreadsheet</div>
+                <button class="close-btn" onclick="closeModal('edit-modal')">×</button>
+            </div>
+            <div id="edit-content"></div>
+        </div>
+    </div>
+
+    <!-- Theme Modal -->
+    <div class="modal" id="theme-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🎨 Choose Theme</div>
+                <button class="close-btn" onclick="closeModal('theme-modal')">×</button>
+            </div>
+            <div class="theme-grid">
+                <div class="theme-option theme-blue selected" onclick="selectTheme('blue')">
+                    Classic Blue
+                </div>
+                <div class="theme-option theme-green" onclick="selectTheme('green')">
+                    Fresh Green
+                </div>
+                <div class="theme-option theme-purple" onclick="selectTheme('purple')">
+                    Royal Purple
+                </div>
+                <div class="theme-option theme-orange" onclick="selectTheme('orange')">
+                    Sunset Orange
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyTheme()">Apply Theme</button>
+        </div>
+    </div>
+
+    <!-- Formula Modal -->
+    <div class="modal" id="formula-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📐 Add Formula</div>
+                <button class="close-btn" onclick="closeModal('formula-modal')">×</button>
+            </div>
+            <p style="color: #6b7280; margin-bottom: 20px;">Choose what you want to calculate:</p>
+            <div class="formula-options">
+                <div class="formula-option" onclick="selectFormula('sum')">
+                    <strong>Sum Column</strong> - Add up all numbers
+                </div>
+                <div class="formula-option" onclick="selectFormula('average')">
+                    <strong>Average</strong> - Calculate average
+                </div>
+                <div class="formula-option" onclick="selectFormula('count')">
+                    <strong>Count</strong> - Count items
+                </div>
+                <div class="formula-option" onclick="selectFormula('percent')">
+                    <strong>Percentage</strong> - Calculate percentage
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyFormula()">Add Formula</button>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🤝 Share Spreadsheet</div>
+                <button class="close-btn" onclick="closeModal('share-modal')">×</button>
+            </div>
+            <p style="color: #6b7280; margin-bottom: 20px;">Share this link with anyone:</p>
+            <div class="share-link">
+                <input type="text" id="share-link-input" readonly>
+                <button class="copy-btn" onclick="copyShareLink()">📋 Copy</button>
+            </div>
+            <p style="color: #6b7280; font-size: 0.9em; margin-top: 10px;">
+                💡 Anyone with this link can download a copy of your spreadsheet
+            </p>
+        </div>
+    </div>
+
+    <!-- Versions Modal -->
+    <div class="modal" id="versions-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🕐 Version History</div>
+                <button class="close-btn" onclick="closeModal('versions-modal')">×</button>
+            </div>
+            <div id="versions-list"></div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div style="color: var(--dark); font-size: 1.2em; font-weight: 700;">
+                <span id="loading-text">Creating your spreadsheet...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-header">
+            <div class="notification-title" id="notif-title"></div>
+            <button class="close-btn" onclick="closeNotification()" style="width: 30px; height: 30px; font-size: 1.5em;">×</button>
+        </div>
+        <div class="notification-body" id="notif-body"></div>
+    </div>
+
+    <script>
+        // ===== TEMPLATES =====
+        const TEMPLATES = {
+            budget: {
+                title: "Monthly Budget Tracker",
+                description: "Track income and expenses to manage your budget",
+                columns: ["Date", "Category", "Description", "Amount", "Type", "Balance"],
+                data: [
+                    ["1/1/2026", "Income", "Salary", "$3,500", "Income", "$3,500"],
+                    ["1/5/2026", "Housing", "Rent", "$1,200", "Expense", "$2,300"],
+                    ["1/8/2026", "Food", "Groceries", "$250", "Expense", "$2,050"],
+                    ["1/12/2026", "Transportation", "Gas", "$80", "Expense", "$1,970"],
+                    ["1/15/2026", "Entertainment", "Movies", "$50", "Expense", "$1,920"]
+                ]
+            },
+            workout: {
+                title: "Workout Log",
+                description: "Track exercises, sets, reps, and weight",
+                columns: ["Date", "Exercise", "Sets", "Reps", "Weight (lbs)", "Notes"],
+                data: [
+                    ["1/1/2026", "Bench Press", "3", "10", "135", "Felt strong"],
+                    ["1/1/2026", "Squats", "3", "12", "185", "Good form"],
+                    ["1/3/2026", "Deadlift", "3", "8", "225", "PR!"],
+                    ["1/3/2026", "Pull-ups", "3", "8", "Body", "Getting easier"],
+                    ["1/5/2026", "Shoulder Press", "3", "10", "65", "Focus on control"]
+                ]
+            },
+            meal: {
+                title: "Weekly Meal Planner",
+                description: "Plan meals and generate shopping lists",
+                columns: ["Day", "Breakfast", "Lunch", "Dinner", "Snacks", "Calories"],
+                data: [
+                    ["Monday", "Oatmeal", "Chicken Salad", "Pasta", "Apple", "1,800"],
+                    ["Tuesday", "Eggs & Toast", "Turkey Sandwich", "Stir Fry", "Yogurt", "1,900"],
+                    ["Wednesday", "Smoothie", "Soup", "Grilled Chicken", "Nuts", "1,750"],
+                    ["Thursday", "Pancakes", "Wrap", "Fish Tacos", "Banana", "2,000"],
+                    ["Friday", "Cereal", "Leftovers", "Pizza", "Cheese", "2,100"]
+                ]
+            },
+            habits: {
+                title: "Daily Habit Tracker",
+                description: "Build positive habits by tracking daily",
+                columns: ["Date", "Water (8 cups)", "Exercise", "Reading", "Meditation", "Sleep (hrs)"],
+                data: [
+                    ["1/1/2026", "✓", "✓", "✓", "✓", "7.5"],
+                    ["1/2/2026", "✓", "✗", "✓", "✓", "8.0"],
+                    ["1/3/2026", "✓", "✓", "✗", "✓", "7.0"],
+                    ["1/4/2026", "✓", "✓", "✓", "✓", "8.5"],
+                    ["1/5/2026", "✓", "✓", "✓", "✗", "7.5"]
+                ]
+            },
+            expense: {
+                title: "Expense Report",
+                description: "Track business or personal expenses",
+                columns: ["Date", "Vendor", "Category", "Amount", "Payment Method", "Receipt"],
+                data: [
+                    ["1/5/2026", "Office Depot", "Supplies", "$45.99", "Credit Card", "Yes"],
+                    ["1/8/2026", "Shell Gas", "Travel", "$52.00", "Debit Card", "Yes"],
+                    ["1/10/2026", "Amazon", "Equipment", "$129.99", "Credit Card", "Yes"],
+                    ["1/12/2026", "Starbucks", "Meals", "$8.50", "Cash", "No"],
+                    ["1/15/2026", "Hotel", "Lodging", "$185.00", "Credit Card", "Yes"]
+                ]
+            },
+            inventory: {
+                title: "Inventory Tracker",
+                description: "Track stock levels and reorder points",
+                columns: ["Item", "SKU", "Quantity", "Location", "Reorder Point", "Supplier"],
+                data: [
+                    ["Widget A", "WDG-001", "150", "Warehouse A", "50", "Acme Corp"],
+                    ["Widget B", "WDG-002", "75", "Warehouse A", "30", "Acme Corp"],
+                    ["Gadget X", "GDG-001", "200", "Warehouse B", "75", "Tech Supply"],
+                    ["Gadget Y", "GDG-002", "45", "Warehouse B", "40", "Tech Supply"],
+                    ["Tool Z", "TL-001", "30", "Warehouse C", "20", "Tool Co"]
+                ]
+            },
+            goals: {
+                title: "Goal Tracker",
+                description: "Set and track goals with deadlines",
+                columns: ["Goal", "Category", "Target Date", "Progress %", "Status", "Notes"],
+                data: [
+                    ["Lose 10 lbs", "Health", "3/31/2026", "40%", "In Progress", "Down 4 lbs"],
+                    ["Read 12 books", "Personal", "12/31/2026", "15%", "In Progress", "2 books done"],
+                    ["Save $5,000", "Financial", "6/30/2026", "60%", "On Track", "$3,000 saved"],
+                    ["Learn Spanish", "Education", "12/31/2026", "25%", "In Progress", "Duolingo daily"],
+                    ["Run Marathon", "Fitness", "10/15/2026", "10%", "Started", "Training plan"]
+                ]
+            },
+            subscription: {
+                title: "Subscription Tracker",
+                description: "Manage recurring subscriptions",
+                columns: ["Service", "Cost/Month", "Billing Date", "Category", "Auto-Renew", "Notes"],
+                data: [
+                    ["Netflix", "$15.99", "5th", "Entertainment", "Yes", "Family plan"],
+                    ["Spotify", "$9.99", "12th", "Music", "Yes", "Premium"],
+                    ["Amazon Prime", "$14.99", "20th", "Shopping", "Yes", "Annual option"],
+                    ["Gym Membership", "$45.00", "1st", "Health", "Yes", "Check for deals"],
+                    ["Cloud Storage", "$2.99", "15th", "Tech", "Yes", "200GB plan"]
+                ]
+            }
+        };
+
+        // ===== TIPS =====
+        const TIPS = [
+            "💡 Click 'Edit & Customize' on any saved spreadsheet to add or remove columns!",
+            "🎨 Each spreadsheet can have its own color theme - try it out!",
+            "📐 Use the Formula Builder to add calculations without knowing Excel syntax",
+            "🤝 Share your spreadsheets with friends using the Share button",
+            "🕐 Version History lets you restore any previous version of your sheet",
+            "🔥 Create a spreadsheet every day to build your streak!",
+            "📊 Check Analytics to see your most-used templates",
+            "💾 Your spreadsheets auto-save - you'll never lose your work",
+            "⚡ Pro users get unlimited spreadsheets and priority support",
+            "🎯 Set up recurring templates to auto-generate sheets weekly or monthly"
+        ];
+
+        // ===== ACHIEVEMENTS =====
+        const ACHIEVEMENTS = [
+            { id: 'first', icon: '🎉', title: 'First Sheet', desc: 'Create your first spreadsheet', target: 1 },
+            { id: 'five', icon: '⭐', title: 'Getting Started', desc: 'Create 5 spreadsheets', target: 5 },
+            { id: 'ten', icon: '🏆', title: 'Spreadsheet Pro', desc: 'Create 10 spreadsheets', target: 10 },
+            { id: 'streak3', icon: '🔥', title: '3-Day Streak', desc: 'Create sheets 3 days in a row', target: 3 },
+            { id: 'streak7', icon: '🌟', title: 'Week Warrior', desc: 'Maintain 7-day streak', target: 7 },
+            { id: 'share', icon: '🤝', title: 'Team Player', desc: 'Share a spreadsheet', target: 1 },
+            { id: 'edit', icon: '✏️', title: 'Customizer', desc: 'Edit a spreadsheet', target: 1 },
+            { id: 'formula', icon: '📐', title: 'Formula Master', desc: 'Add a formula', target: 1 }
+        ];
+
+        // ===== STATE =====
+        const STORAGE = 'sheeteasy_v2';
+        let currentTheme = 'blue';
+        let currentFormula = null;
+        let currentTipIndex = 0;
+        let currentEditingSheet = null;
+        let selectedTheme = 'blue';
+
+        // ===== STORAGE FUNCTIONS =====
+        function getData() {
+            const data = localStorage.getItem(STORAGE);
+            if (!data) {
+                return {
+                    credits: 3,
+                    sheets: [],
+                    analytics: {
+                        totalCreated: 0,
+                        thisWeek: 0,
+                        mostUsed: '',
+                        streak: 0,
+                        lastCreated: null,
+                        templateCounts: {}
+                    },
+                    achievements: {},
+                    onboarded: false
+                };
+            }
+            return JSON.parse(data);
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE, JSON.stringify(data));
+            updateUI();
+        }
+
+        function updateUI() {
+            const data = getData();
+            document.getElementById('credits').textContent = data.credits;
+            document.getElementById('count').textContent = data.sheets.length;
+            document.getElementById('streak').textContent = `🔥 ${data.analytics.streak} day streak`;
+            displaySavedSheets();
+            updateAnalytics();
+        }
+
+        // ===== TABS =====
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + '-view').classList.add('active');
+            
+            if (tab === 'saved') displaySavedSheets();
+            if (tab === 'analytics') updateAnalytics();
+            if (tab === 'learning') showTip();
+        }
+
+        // ===== CREATE SPREADSHEET =====
+        async function createFromTemplate(templateName) {
+            const data = getData();
+            
+            if (data.credits <= 0) {
+                showNotification('No Credits Left', 'Upgrade to Pro for unlimited spreadsheets!');
+                return;
+            }
+
+            const template = TEMPLATES[templateName];
+            showLoading('Creating your spreadsheet...');
+
+            setTimeout(async () => {
+                await createExcelFile(template);
+                saveSheet(template, templateName);
+                updateStreak();
+                checkAchievements();
+                useCredit();
+                hideLoading();
+                
+                showNotification('Success!', `${template.title} downloaded! Check your Downloads folder.`);
+            }, 1000);
+        }
+
+        async function generateCustom() {
+            const input = document.getElementById('user-input').value.trim();
+            
+            if (!input) {
+                showNotification('Input Required', 'Please describe what you want to track!');
+                return;
+            }
+
+            const data = getData();
+            if (data.credits <= 0) {
+                showNotification('No Credits Left', 'Upgrade to Pro for unlimited!');
+                return;
+            }
+
+            const lower = input.toLowerCase();
+            let template = TEMPLATES.budget; // Default
+            let templateName = 'budget';
+
+            if (lower.includes('workout') || lower.includes('exercise')) {
+                template = TEMPLATES.workout;
+                templateName = 'workout';
+            } else if (lower.includes('meal') || lower.includes('food')) {
+                template = TEMPLATES.meal;
+                templateName = 'meal';
+            } else if (lower.includes('habit')) {
+                template = TEMPLATES.habits;
+                templateName = 'habits';
+            } else if (lower.includes('inventory')) {
+                template = TEMPLATES.inventory;
+                templateName = 'inventory';
+            } else if (lower.includes('goal')) {
+                template = TEMPLATES.goals;
+                templateName = 'goals';
+            } else if (lower.includes('subscription')) {
+                template = TEMPLATES.subscription;
+                templateName = 'subscription';
+            }
+
+            showLoading('Creating custom spreadsheet...');
+
+            setTimeout(async () => {
+                await createExcelFile(template);
+                saveSheet(template, templateName);
+                updateStreak();
+                checkAchievements();
+                useCredit();
+                hideLoading();
+                
+                showNotification('Created!', `${template.title} is ready!`);
+            }, 1000);
+        }
+
+        function saveSheet(template, templateName) {
+            const data = getData();
+            const sheet = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                template: templateName,
+                versions: [
+                    {
+                        version: 1,
+                        date: new Date().toISOString(),
+                        ...template
+                    }
+                ],
+                currentVersion: 1,
+                ...template
+            };
+            
+            data.sheets.unshift(sheet);
+            
+            // Update analytics
+            data.analytics.totalCreated++;
+            data.analytics.thisWeek++;
+            data.analytics.templateCounts[templateName] = (data.analytics.templateCounts[templateName] || 0) + 1;
+            
+            // Find most used
+            let maxCount = 0;
+            let mostUsed = '';
+            for (let [key, count] of Object.entries(data.analytics.templateCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    mostUsed = TEMPLATES[key].title;
+                }
+            }
+            data.analytics.mostUsed = mostUsed;
+            
+            saveData(data);
+        }
+
+        function useCredit() {
+            const data = getData();
+            if (data.credits > 0) {
+                data.credits--;
+                saveData(data);
+            }
+        }
+
+        function updateStreak() {
+            const data = getData();
+            const today = new Date().toDateString();
+            const lastCreated = data.analytics.lastCreated ? new Date(data.analytics.lastCreated).toDateString() : null;
+            
+            if (lastCreated === today) {
+                return; // Already created today
+            }
+            
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+            
+            if (lastCreated === yesterdayStr) {
+                data.analytics.streak++;
+            } else if (lastCreated !== null) {
+                data.analytics.streak = 1;
+            } else {
+                data.analytics.streak = 1;
+            }
+            
+            data.analytics.lastCreated = new Date().toISOString();
+            saveData(data);
+        }
+
+        function checkAchievements() {
+            const data = getData();
+            const total = data.analytics.totalCreated;
+            const streak = data.analytics.streak;
+            
+            if (total >= 1) unlockAchievement('first');
+            if (total >= 5) unlockAchievement('five');
+            if (total >= 10) unlockAchievement('ten');
+            if (streak >= 3) unlockAchievement('streak3');
+            if (streak >= 7) unlockAchievement('streak7');
+        }
+
+        function unlockAchievement(id) {
+            const data = getData();
+            if (!data.achievements[id]) {
+                data.achievements[id] = true;
+                saveData(data);
+                
+                const achievement = ACHIEVEMENTS.find(a => a.id === id);
+                if (achievement) {
+                    showNotification('Achievement Unlocked! 🏆', `${achievement.icon} ${achievement.title}: ${achievement.desc}`);
+                }
+            }
+        }
+
+        // ===== EXCEL CREATION =====
+        async function createExcelFile(template, theme = 'blue') {
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet(template.title);
+
+            const themeColors = {
+                blue: 'FF4472C4',
+                green: 'FF10B981',
+                purple: 'FF8B5CF6',
+                orange: 'FFF59E0B'
+            };
+
+            sheet.columns = template.columns.map((col, i) => ({
+                header: col,
+                key: 'col' + i,
+                width: 18
+            }));
+
+            sheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+            sheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: themeColors[theme] }
+            };
+            sheet.getRow(1).height = 25;
+            sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+            template.data.forEach(row => sheet.addRow(row));
+
+            for (let i = 0; i < 25; i++) {
+                sheet.addRow(new Array(template.columns.length).fill(''));
+            }
+
+            const instructions = workbook.addWorksheet('Instructions');
+            instructions.getColumn(1).width = 80;
+            
+            instructions.addRow(['📖 HOW TO USE THIS SPREADSHEET']).font = { bold: true, size: 14 };
+            instructions.addRow([]);
+            instructions.addRow([template.description]);
+            instructions.addRow([]);
+            instructions.addRow(['GETTING STARTED:']).font = { bold: true, size: 12 };
+            instructions.addRow(['1. Go to the "' + template.title + '" tab']);
+            instructions.addRow(['2. Review the sample data']);
+            instructions.addRow(['3. Delete samples and add your data']);
+            instructions.addRow([]);
+            instructions.addRow(['💡 NEED CHANGES? Go to SheetEasy → My Spreadsheets → Edit']);
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = template.title.replace(/[^a-z0-9]/gi, '_') + '.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ===== SAVED SHEETS =====
+        function displaySavedSheets() {
+            const data = getData();
+            const container = document.getElementById('sheets-list');
+
+            if (data.sheets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📊</div>
+                        <h2>No spreadsheets yet</h2>
+                        <p>Create your first one in the "Create" tab!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `<div class="spreadsheet-grid">` + 
+                data.sheets.map(s => `
+                    <div class="sheet-card">
+                        <div class="sheet-header">
+                            <div class="sheet-title">${s.title}</div>
+                            <div class="version-badge">v${s.currentVersion}</div>
+                        </div>
+                        <div class="sheet-meta">
+                            <div>📅 ${new Date(s.date).toLocaleDateString()}</div>
+                            <div>📊 ${s.columns.length} columns</div>
+                            <div>📝 ${s.versions.length} version(s)</div>
+                        </div>
+                        <div class="sheet-actions">
+                            <button class="sheet-btn download" onclick="redownload(${s.id})">
+                                📥 Download
+                            </button>
+                            <button class="sheet-btn edit" onclick="openEdit(${s.id})">
+                                ✏️ Edit
+                            </button>
+                            <button class="sheet-btn share" onclick="shareSheet(${s.id})">
+                                🤝 Share
+                            </button>
+                            <button class="sheet-btn versions" onclick="showVersions(${s.id})">
+                                🕐 Versions
+                            </button>
+                            <button class="sheet-btn delete" onclick="deleteSheet(${s.id})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('') + 
+            `</div>`;
+        }
+
+        async function redownload(id) {
+            const data = getData();
+            const sheet = data.sheets.find(s => s.id === id);
+            if (!sheet) return;
+
+            showLoading('Preparing download...');
+            setTimeout(async () => {
+                await createExcelFile(sheet);
+                hideLoading();
+                showNotification('Downloaded!', 'Check your Downloads folder.');
+            }, 500);
+        }
+
+        function deleteSheet(id) {
+            if (confirm('Delete this spreadsheet?')) {
+                const data = getData();
+                data.sheets = data.sheets.filter(s => s.id !== id);
+                saveData(data);
+                showNotification('Deleted', 'Spreadsheet removed from your library.');
+            }
+        }
+
+        function shareSheet(id) {
+            const link = `https://sheeteasy.app/shared/${id}`;
+            document.getElementById('share-link-input').value = link;
+            openModal('share-modal');
+            
+            const data = getData();
+            if (!data.achievements.share) {
+                unlockAchievement('share');
+            }
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('share-link-input');
+            input.select();
+            document.execCommand('copy');
+            showNotification('Copied!', 'Share link copied to clipboard.');
+        }
+
+        function showVersions(id) {
+            const data = getData();
+            const sheet = data.sheets.find(s => s.id === id);
+            if (!sheet) return;
+
+            const list = document.getElementById('versions-list');
+            list.innerHTML = sheet.versions.map(v => `
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Version ${v.version}</strong>
+                            <div style="color: #6b7280; font-size: 0.9em;">
+                                ${new Date(v.date).toLocaleString()}
+                            </div>
+                        </div>
+                        <button class="sheet-btn download" onclick="downloadVersion(${id}, ${v.version})" style="width: auto; padding: 8px 15px;">
+                            Restore
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            openModal('versions-modal');
+        }
+
+        async function downloadVersion(id, version) {
+            const data = getData();
+            const sheet = data.sheets.find(s => s.id === id);
+            const versionData = sheet.versions.find(v => v.version === version);
+            
+            if (versionData) {
+                await createExcelFile(versionData);
+                showNotification('Restored!', `Version ${version} downloaded.`);
+            }
+        }
+
+        function openEdit(id) {
+            const data = getData();
+            currentEditingSheet = data.sheets.find(s => s.id === id);
+            
+            const content = document.getElementById('edit-content');
+            content.innerHTML = `
+                <p style="color: #6b7280; margin-bottom: 20px;">What would you like to change?</p>
+                <div class="formula-options">
+                    <div class="formula-option" onclick="editAction('add')">
+                        <strong>➕ Add Columns</strong> - Add new columns to track more
+                    </div>
+                    <div class="formula-option" onclick="editAction('remove')">
+                        <strong>➖ Remove Columns</strong> - Remove columns you don't need
+                    </div>
+                    <div class="formula-option" onclick="editAction('theme')">
+                        <strong>🎨 Change Theme</strong> - Change colors
+                    </div>
+                    <div class="formula-option" onclick="editAction('formula')">
+                        <strong>📐 Add Formula</strong> - Add calculations
+                    </div>
+                </div>
+            `;
+            
+            openModal('edit-modal');
+            
+            if (!data.achievements.edit) {
+                unlockAchievement('edit');
+            }
+        }
+
+        function editAction(action) {
+            closeModal('edit-modal');
+            
+            if (action === 'theme') {
+                openModal('theme-modal');
+            } else if (action === 'formula') {
+                openModal('formula-modal');
+            } else if (action === 'add') {
+                const newCol = prompt('Enter new column name:');
+                if (newCol) {
+                    currentEditingSheet.columns.push(newCol);
+                    currentEditingSheet.data.forEach(row => row.push(''));
+                    createNewVersion();
+                    showNotification('Column Added!', `"${newCol}" column added successfully.`);
+                }
+            } else if (action === 'remove') {
+                const colName = prompt('Enter column name to remove:');
+                if (colName) {
+                    const idx = currentEditingSheet.columns.indexOf(colName);
+                    if (idx !== -1) {
+                        currentEditingSheet.columns.splice(idx, 1);
+                        currentEditingSheet.data.forEach(row => row.splice(idx, 1));
+                        createNewVersion();
+                        showNotification('Column Removed!', `"${colName}" removed successfully.`);
+                    }
+                }
+            }
+        }
+
+        function createNewVersion() {
+            const data = getData();
+            const sheetIdx = data.sheets.findIndex(s => s.id === currentEditingSheet.id);
+            
+            const newVersion = {
+                version: currentEditingSheet.currentVersion + 1,
+                date: new Date().toISOString(),
+                title: currentEditingSheet.title,
+                description: currentEditingSheet.description,
+                columns: [...currentEditingSheet.columns],
+                data: currentEditingSheet.data.map(row => [...row])
+            };
+            
+            currentEditingSheet.versions.push(newVersion);
+            currentEditingSheet.currentVersion++;
+            
+            data.sheets[sheetIdx] = currentEditingSheet;
+            saveData(data);
+        }
+
+        // ===== THEME & FORMULA =====
+        function selectTheme(theme) {
+            selectedTheme = theme;
+            document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function applyTheme() {
+            createNewVersion();
+            closeModal('theme-modal');
+            showNotification('Theme Applied!', 'Download to see new colors.');
+        }
+
+        function selectFormula(formula) {
+            currentFormula = formula;
+            document.querySelectorAll('.formula-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function applyFormula() {
+            if (currentFormula) {
+                createNewVersion();
+                closeModal('formula-modal');
+                showNotification('Formula Added!', 'Formula will be in next download.');
+                
+                const data = getData();
+                if (!data.achievements.formula) {
+                    unlockAchievement('formula');
+                }
+            }
+        }
+
+        // ===== ANALYTICS =====
+        function updateAnalytics() {
+            const data = getData();
+            document.getElementById('total-created').textContent = data.analytics.totalCreated;
+            document.getElementById('this-week').textContent = data.analytics.thisWeek;
+            document.getElementById('most-used').textContent = data.analytics.mostUsed || 'N/A';
+            document.getElementById('streak-count').textContent = data.analytics.streak;
+            
+            const container = document.getElementById('achievements');
+            container.innerHTML = ACHIEVEMENTS.map(a => {
+                const unlocked = data.achievements[a.id];
+                return `
+                    <div class="achievement ${unlocked ? 'unlocked' : 'locked'}">
+                        <div class="achievement-icon">${a.icon}</div>
+                        <div class="achievement-info">
+                            <div class="achievement-title">${a.title}</div>
+                            <div class="achievement-desc">${a.desc}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== LEARNING =====
+        function showTip() {
+            document.getElementById('tip-text').textContent = TIPS[currentTipIndex];
+        }
+
+        function nextTip() {
+            currentTipIndex = (currentTipIndex + 1) % TIPS.length;
+            showTip();
+        }
+
+        function previousTip() {
+            currentTipIndex = (currentTipIndex - 1 + TIPS.length) % TIPS.length;
+            showTip();
+        }
+
+        function showGuide(guide) {
+            const guides = {
+                'getting-started': 'Click a template or describe what you want to track. Your spreadsheet will be created instantly!',
+                'formulas': 'Use the Formula Builder in the Edit menu to add calculations without knowing Excel syntax.',
+                'sharing': 'Click the Share button on any spreadsheet to get a link you can send to anyone.',
+                'import': 'Upload your existing Excel files and SheetEasy will help you organize and improve them.'
+            };
+            
+            alert(guides[guide] || 'Guide coming soon!');
+        }
+
+        // ===== ONBOARDING =====
+        function showOnboarding() {
+            const steps = [
+                {
+                    icon: '👋',
+                    title: 'Welcome to SheetEasy!',
+                    desc: 'Create perfect spreadsheets in seconds without knowing Excel. Let\'s get started!'
+                },
+                {
+                    icon: '📊',
+                    title: 'Choose a Template',
+                    desc: 'Start with our pre-built templates or describe what you want to track in your own words.'
+                },
+                {
+                    icon: '✨',
+                    title: 'Download & Edit',
+                    desc: 'Your spreadsheet downloads instantly. Need changes? Use the Edit button to customize anytime.'
+                },
+                {
+                    icon: '🚀',
+                    title: 'You\'re Ready!',
+                    desc: 'You have 3 free spreadsheets. Upgrade to Pro for unlimited creation. Let\'s create your first one!'
+                }
+            ];
+            
+            let currentStep = 0;
+            
+            function renderStep() {
+                const step = steps[currentStep];
+                document.getElementById('onboarding-content').innerHTML = `
+                    <div class="onboarding-icon">${step.icon}</div>
+                    <div class="onboarding-title">${step.title}</div>
+                    <div class="onboarding-desc">${step.desc}</div>
+                    <button class="btn btn-primary" onclick="${currentStep < steps.length - 1 ? 'nextOnboardingStep()' : 'closeOnboarding()'}">
+                        ${currentStep < steps.length - 1 ? 'Next →' : 'Get Started! 🎉'}
+                    </button>
+                `;
+                
+                document.getElementById('onboarding-progress').innerHTML = steps.map((s, i) => 
+                    `<div class="progress-dot ${i === currentStep ? 'active' : ''}"></div>`
+                ).join('');
+            }
+            
+            window.nextOnboardingStep = () => {
+                currentStep++;
+                renderStep();
+            };
+            
+            window.closeOnboarding = () => {
+                const data = getData();
+                data.onboarded = true;
+                saveData(data);
+                closeModal('onboarding-modal');
+            };
+            
+            renderStep();
+            openModal('onboarding-modal');
+        }
+
+        // ===== MODALS =====
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ===== LOADING =====
+        function showLoading(text) {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // ===== NOTIFICATIONS =====
+        function showNotification(title, body) {
+            document.getElementById('notif-title').textContent = title;
+            document.getElementById('notif-body').textContent = body;
+            document.getElementById('notification').classList.add('active');
+            
+            setTimeout(() => {
+                closeNotification();
+            }, 5000);
+        }
+
+        function closeNotification() {
+            document.getElementById('notification').classList.remove('active');
+        }
+
+        // ===== UPGRADE =====
+        function showUpgrade() {
+            alert('🚀 Upgrade to Pro!\n\n✨ Unlimited spreadsheets\n📊 Advanced analytics\n🤝 Team collaboration\n⚡ Priority support\n🎨 Custom themes\n\nOnly $9.99/month\n\nComing soon!');
+        }
+
+        // ===== INIT =====
+        updateUI();
+        showTip();
+
+        const data = getData();
+        if (!data.onboarded) {
+            setTimeout(() => showOnboarding(), 1000);
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>
