@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SheetEasy - Talk. See. Download. Done.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .app {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.35);
+            max-width: 1400px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* FIRST-TIME USER EXPERIENCE - Critical for Day-1 retention */
+        .onboarding {
+            display: none;
+            text-align: center;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .onboarding.active { display: block; }
+
+        .onboarding-step {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .onboarding-icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .onboarding-title {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .onboarding-subtitle {
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        .onboarding-btn {
+            background: white;
+            color: #667eea;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .onboarding-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+
+        .onboarding-stats {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            opacity: 0.9;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* HEADER with Gamification */
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .streak {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .streak-fire {
+            font-size: 1.3em;
+            animation: flicker 1.5s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .sheets-count {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            padding: 40px;
+        }
+
+        /* Quick Win Section - Get value in <30 seconds */
+        .quick-win {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .quick-win-title {
+            font-size: 2em;
+            color: #1f2937;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .quick-win-subtitle {
+            font-size: 1.1em;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        /* VOICE SECTION - Improved UX */
+        .voice-section {
+            background: linear-gradient(135deg, #f0f9ff, #e0e7ff);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 3px solid #a5b4fc;
+        }
+
+        .voice-prompt {
+            font-size: 1.4em;
+            color: #1e40af;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .voice-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .voice-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 4em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            position: relative;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.7);
+        }
+
+        .voice-btn.listening {
+            animation: pulsate 1.5s infinite;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        @keyframes pulsate {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5); }
+            50% { transform: scale(1.15); box-shadow: 0 20px 50px rgba(239, 68, 68, 0.8); }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 3px solid #ef4444;
+            opacity: 0;
+            animation: pulse-ring 1.5s infinite;
+            pointer-events: none;
+        }
+
+        .voice-btn.listening + .pulse-ring {
+            display: block;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        .voice-status {
+            margin-top: 25px;
+            font-size: 1.2em;
+            color: #4b5563;
+            font-weight: 600;
+            min-height: 30px;
+        }
+
+        .voice-status.active {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .transcript {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            color: #1f2937;
+            font-size: 1.1em;
+            display: none;
+        }
+
+        .transcript.active { display: block; }
+
+        .help-text {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-left: 5px solid #667eea;
+            border-radius: 8px;
+            color: #1e40af;
+            text-align: left;
+        }
+
+        .help-text strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .help-examples {
+            color: #475569;
+            line-height: 1.8;
+        }
+
+        /* TEMPLATES - With Social Proof */
+        .templates-section {
+            margin: 40px 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.6em;
+            color: #1f2937;
+            font-weight: 800;
+        }
+
+        .social-proof {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .template {
+            padding: 30px;
+            background: white;
+            border: 3px solid #e5e7eb;
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .template:hover {
+            border-color: #667eea;
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        }
+
+        .template-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+
+        .template-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+        }
+
+        .template-name {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .template-uses {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+
+        /* PREVIEW SECTION */
+        .preview-section {
+            margin-top: 40px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .preview-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .preview-title {
+            font-size: 2em;
+            font-weight: 800;
+            color: #1f2937;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .spreadsheet-wrapper {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .spreadsheet-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .spreadsheet {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .spreadsheet th {
+            background: #667eea;
+            color: white;
+            padding: 18px;
+            text-align: left;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.95em;
+        }
+
+        .spreadsheet td {
+            padding: 16px 18px;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #f3f4f6;
+        }
+
+        .spreadsheet td:last-child { border-right: none; }
+
+        .spreadsheet tr:hover {
+            background: #f9fafb;
+        }
+
+        .spreadsheet td[contenteditable="true"] {
+            cursor: text;
+            min-width: 120px;
+            transition: all 0.2s;
+        }
+
+        .spreadsheet td[contenteditable="true"]:focus {
+            background: #eff6ff;
+            outline: 2px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .add-row {
+            margin-top: 15px;
+            width: 100%;
+            padding: 16px;
+            background: #f0f9ff;
+            border: 2px dashed #93c5fd;
+            border-radius: 10px;
+            color: #1e40af;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .add-row:hover {
+            background: #dbeafe;
+            border-color: #60a5fa;
+        }
+
+        /* Achievement Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #1f2937, #111827);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 400px;
+        }
+
+        .toast.active { display: flex; }
+
+        @keyframes slideIn {
+            from { transform: translateX(500px) scale(0.8); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .toast-icon {
+            font-size: 2em;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 1.1em;
+        }
+
+        .toast-message {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            .user-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .main {
+                padding: 25px 20px;
+            }
+            .voice-btn {
+                width: 120px;
+                height: 120px;
+                font-size: 3em;
+            }
+            .templates {
+                grid-template-columns: 1fr;
+            }
+            .preview-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading.active { display: flex; }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- ONBOARDING - Critical for first impression -->
+    <div class="onboarding active" id="onboarding">
+        <div class="onboarding-step">
+            <div class="onboarding-icon">🚀</div>
+            <div class="onboarding-title">Create Your First Spreadsheet in 30 Seconds</div>
+            <div class="onboarding-subtitle">
+                No Excel knowledge needed. Just talk, click, or choose a template.
+            </div>
+            <button class="onboarding-btn" onclick="completeOnboarding()">
+                Let's Go! →
+            </button>
+            <div class="onboarding-stats">
+                <div class="stat">
+                    <div class="stat-number">10,247</div>
+                    <div class="stat-label">spreadsheets created today</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">4.9★</div>
+                    <div class="stat-label">average rating</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="app" id="mainApp" style="display: none;">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">
+                <span>📊</span>
+                <span>SheetEasy</span>
+            </div>
+            <div class="user-stats">
+                <div class="streak">
+                    <span class="streak-fire">🔥</span>
+                    <span id="streak-days">0</span> day streak
+                </div>
+                <div class="sheets-count">
+                    <span id="sheets-count">0</span> sheets created
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <!-- QUICK WIN MESSAGING -->
+            <div class="quick-win">
+                <div class="quick-win-title">Your Next Spreadsheet is 30 Seconds Away</div>
+                <div class="quick-win-subtitle">Talk, click a template, or describe what you need</div>
+            </div>
+
+            <!-- VOICE SECTION -->
+            <div class="voice-section">
+                <div class="voice-prompt">🎤 Click & Tell Me What You Want to Track</div>
+                <div class="voice-container">
+                    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+                    <div class="pulse-ring"></div>
+                </div>
+                <div class="voice-status" id="voiceStatus">Tap the microphone to start</div>
+                <div class="transcript" id="transcript"></div>
+                <div class="help-text">
+                    <strong>💡 Try These Examples:</strong>
+                    <div class="help-examples">
+                        • "Track my monthly budget with date, category, and amount"<br>
+                        • "Log my workouts with exercise, sets, reps, and weight"<br>
+                        • "Plan my meals with breakfast, lunch, and dinner"
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEMPLATES -->
+            <div class="templates-section">
+                <div class="section-header">
+                    <div class="section-title">Quick Start Templates</div>
+                    <div class="social-proof">
+                        <span>✓</span>
+                        <span>Used by 10,000+ people today</span>
+                    </div>
+                </div>
+                <div class="templates">
+                    <div class="template" onclick="loadTemplate('budget')">
+                        <div class="template-badge">POPULAR</div>
+                        <div class="template-icon">💵</div>
+                        <div class="template-name">Budget Tracker</div>
+                        <div class="template-uses">3,487 uses today</div>
+                    </div>
+                    <div class="template" onclick="loadTemplate('workout')">
+                        <div class="template-icon">🏋️</div>
+                        <div class="template-name">Workout Log</div>
+                        <div class="template-uses">2,156 uses today</div>
+                    </div>
+                    <div class="template" onclick="loadTemplate('meal')">
+                        <div class="template-icon">🍽️</div>
+                        <div class="template-name">Meal Planner</div>
+                        <div class="template-uses">1,892 uses today</div>
+                    </div>
+                    <div class="template" onclick="loadTemplate('goals')">
+                        <div class="template-icon">🎯</div>
+                        <div class="template-name">Goal Tracker</div>
+                        <div class="template-uses">1,643 uses today</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREVIEW -->
+            <div class="preview-section" id="previewSection">
+                <div class="preview-header">
+                    <div class="preview-title" id="sheetTitle">Your Spreadsheet</div>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="startOver()">🔄 Start Over</button>
+                        <button class="btn btn-primary" onclick="downloadExcel()">📥 Download Excel</button>
+                    </div>
+                </div>
+                <div class="spreadsheet-wrapper">
+                    <div class="spreadsheet-container">
+                        <table class="spreadsheet" id="spreadsheet"></table>
+                    </div>
+                </div>
+                <button class="add-row" onclick="addRow()">+ Add Another Row</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <div class="toast-content">
+            <div class="toast-title" id="toastTitle">Success!</div>
+            <div class="toast-message" id="toastMessage">Action completed</div>
+        </div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let userData = {
+            onboarded: false,
+            streak: 0,
+            lastVisit: null,
+            sheetsCreated: 0,
+            firstSheetDate: null
+        };
+
+        let recognition = null;
+        let isListening = false;
+        let currentData = null;
+
+        const TEMPLATES = {
+            budget: {
+                title: "Monthly Budget Tracker",
+                columns: ["Date", "Category", "Description", "Amount", "Balance"],
+                rows: [
+                    ["1/1/2026", "Income", "Salary", "$3,500", "$3,500"],
+                    ["1/5/2026", "Housing", "Rent", "$1,200", "$2,300"],
+                    ["1/8/2026", "Food", "Groceries", "$250", "$2,050"],
+                    ["", "", "", "", ""]
+                ]
+            },
+            workout: {
+                title: "Workout Log",
+                columns: ["Date", "Exercise", "Sets", "Reps", "Weight (lbs)"],
+                rows: [
+                    ["1/1/2026", "Bench Press", "3", "10", "135"],
+                    ["1/1/2026", "Squats", "3", "12", "185"],
+                    ["", "", "", "", ""]
+                ]
+            },
+            meal: {
+                title: "Weekly Meal Planner",
+                columns: ["Day", "Breakfast", "Lunch", "Dinner", "Snacks"],
+                rows: [
+                    ["Monday", "Oatmeal", "Salad", "Pasta", "Apple"],
+                    ["Tuesday", "Eggs", "Sandwich", "Stir Fry", "Yogurt"],
+                    ["", "", "", "", ""]
+                ]
+            },
+            goals: {
+                title: "Goal Tracker",
+                columns: ["Goal", "Category", "Deadline", "Progress", "Status"],
+                rows: [
+                    ["Lose 10 lbs", "Health", "3/31/2026", "40%", "In Progress"],
+                    ["Read 12 books", "Personal", "12/31/2026", "15%", "Started"],
+                    ["", "", "", "", ""]
+                ]
+            }
+        };
+
+        // ===== INITIALIZATION =====
+        function init() {
+            loadUserData();
+            if (userData.onboarded) {
+                completeOnboarding();
+                updateStreak();
+            }
+            initVoiceRecognition();
+        }
+
+        function loadUserData() {
+            const saved = localStorage.getItem('sheeteasy_user');
+            if (saved) {
+                userData = JSON.parse(saved);
+            }
+        }
+
+        function saveUserData() {
+            localStorage.setItem('sheeteasy_user', JSON.stringify(userData));
+        }
+
+        function completeOnboarding() {
+            userData.onboarded = true;
+            saveUserData();
+            document.getElementById('onboarding').classList.remove('active');
+            document.getElementById('mainApp').style.display = 'block';
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('streak-days').textContent = userData.streak;
+            document.getElementById('sheets-count').textContent = userData.sheetsCreated;
+        }
+
+        function updateStreak() {
+            const today = new Date().toDateString();
+            const lastVisit = userData.lastVisit ? new Date(userData.lastVisit).toDateString() : null;
+
+            if (lastVisit !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toDateString();
+
+                if (lastVisit === yesterdayStr) {
+                    userData.streak++;
+                    if (userData.streak === 3) {
+                        showToast('🔥 3-Day Streak!', 'You\'re on fire! Keep it going!', '🔥');
+                    } else if (userData.streak === 7) {
+                        showToast('🌟 7-Day Streak!', 'Amazing dedication!', '🌟');
+                    }
+                } else if (lastVisit) {
+                    userData.streak = 1;
+                } else {
+                    userData.streak = 1;
+                }
+
+                userData.lastVisit = new Date().toISOString();
+                saveUserData();
+                updateUI();
+            }
+        }
+
+        // ===== VOICE RECOGNITION =====
+        function initVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = () => {
+                    isListening = true;
+                    document.getElementById('voiceBtn').classList.add('listening');
+                    document.getElementById('voiceStatus').textContent = '🎤 Listening... speak now!';
+                    document.getElementById('voiceStatus').classList.add('active');
+                    document.getElementById('transcript').classList.add('active');
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results)
+                        .map(result => result[0].transcript)
+                        .join('');
+                    
+                    document.getElementById('transcript').textContent = `You said: "${transcript}"`;
+                    
+                    if (event.results[0].isFinal) {
+                        processVoiceCommand(transcript);
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech error:', event.error);
+                    if (event.error === 'not-allowed') {
+                        showToast('Microphone Blocked', 'Please allow microphone access in your browser settings', '❌');
+                    } else {
+                        showToast('Voice Error', 'Try clicking the microphone again', '❌');
+                    }
+                    resetVoiceUI();
+                };
+
+                recognition.onend = () => resetVoiceUI();
+            } else {
+                document.querySelector('.voice-section').innerHTML = `
+                    <div class="help-text">
+                        <strong>⚠️ Voice not supported in this browser</strong>
+                        <div class="help-examples">
+                            Voice recognition works best in Chrome, Edge, or Safari.<br>
+                            No worries! You can still use templates below.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                showToast('Not Supported', 'Try Chrome or Safari for voice features', 'ℹ️');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function resetVoiceUI() {
+            isListening = false;
+            document.getElementById('voiceBtn').classList.remove('listening');
+            document.getElementById('voiceStatus').textContent = 'Tap the microphone to start';
+            document.getElementById('voiceStatus').classList.remove('active');
+        }
+
+        function processVoiceCommand(text) {
+            const lower = text.toLowerCase();
+            const columns = extractColumns(lower);
+            
+            if (columns.length > 0) {
+                const title = extractTitle(lower) || "My Spreadsheet";
+                createCustomSpreadsheet(title, columns);
+                showToast('Created!', 'Spreadsheet ready from your voice', '✅');
+                trackSheetCreation();
+            } else {
+                // Smart fallback
+                if (lower.includes('budget') || lower.includes('money') || lower.includes('expense')) {
+                    loadTemplate('budget');
+                } else if (lower.includes('workout') || lower.includes('exercise')) {
+                    loadTemplate('workout');
+                } else if (lower.includes('meal') || lower.includes('food')) {
+                    loadTemplate('meal');
+                } else if (lower.includes('goal')) {
+                    loadTemplate('goals');
+                } else {
+                    showToast('Try Again', 'Be more specific about what you want to track', 'ℹ️');
+                }
+            }
+        }
+
+        function extractTitle(text) {
+            const match = text.match(/(?:create|make|track|build)\s+(?:a|an|my)?\s*(.+?)(?:\s+with|\s+spreadsheet|$)/i);
+            return match ? match[1].trim() : null;
+        }
+
+        function extractColumns(text) {
+            const columns = [];
+            const keywords = ['date', 'name', 'category', 'amount', 'price', 'description', 
+                            'notes', 'status', 'exercise', 'sets', 'reps', 'weight',
+                            'breakfast', 'lunch', 'dinner', 'goal', 'deadline', 'progress'];
+            
+            keywords.forEach(keyword => {
+                if (text.includes(keyword)) {
+                    columns.push(keyword.charAt(0).toUpperCase() + keyword.slice(1));
+                }
+            });
+
+            if (columns.length === 0) {
+                const withMatch = text.match(/with\s+(.+)/);
+                if (withMatch) {
+                    const parts = withMatch[1].split(/,|\s+and\s+/);
+                    columns.push(...parts.map(p => p.trim().charAt(0).toUpperCase() + p.trim().slice(1)));
+                }
+            }
+
+            return columns;
+        }
+
+        function createCustomSpreadsheet(title, columns) {
+            currentData = {
+                title: title,
+                columns: columns,
+                rows: [columns.map(() => "")]
+            };
+            displaySpreadsheet();
+        }
+
+        // ===== TEMPLATES =====
+        function loadTemplate(name) {
+            showLoading();
+            setTimeout(() => {
+                const template = TEMPLATES[name];
+                currentData = {
+                    title: template.title,
+                    columns: template.columns,
+                    rows: template.rows
+                };
+                displaySpreadsheet();
+                hideLoading();
+                showToast('Template Loaded!', `${template.title} ready to customize`, '✅');
+                trackSheetCreation();
+            }, 500); // Artificial delay for perceived "work"
+        }
+
+        function displaySpreadsheet() {
+            const table = document.getElementById('spreadsheet');
+            table.innerHTML = '';
+
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            currentData.columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+            currentData.rows.forEach(row => {
+                const tr = tbody.insertRow();
+                row.forEach(cell => {
+                    const td = tr.insertCell();
+                    td.textContent = cell;
+                    td.contentEditable = "true";
+                });
+            });
+
+            document.getElementById('sheetTitle').textContent = currentData.title;
+            document.getElementById('previewSection').classList.add('active');
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function addRow() {
+            const table = document.getElementById('spreadsheet');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const row = tbody.insertRow();
+            
+            currentData.columns.forEach(() => {
+                const cell = row.insertCell();
+                cell.textContent = "";
+                cell.contentEditable = "true";
+            });
+
+            currentData.rows.push(currentData.columns.map(() => ""));
+            showToast('Row Added!', 'Keep building your spreadsheet', '✅');
+        }
+
+        // ===== EXPORT =====
+        async function downloadExcel() {
+            showLoading();
+            
+            try {
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Sheet1');
+
+                worksheet.addRow(currentData.columns);
+                worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+                worksheet.getRow(1).fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF667EEA' }
+                };
+                worksheet.getRow(1).height = 25;
+
+                const table = document.getElementById('spreadsheet');
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    const rowData = Array.from(cells).map(td => td.textContent.trim());
+                    worksheet.addRow(rowData);
+                });
+
+                worksheet.columns.forEach(column => {
+                    column.width = 18;
+                });
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentData.title}.xlsx`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                hideLoading();
+                showToast('Downloaded! 🎉', 'Check your Downloads folder', '📥');
+                
+                // Track successful download
+                userData.sheetsCreated++;
+                if (!userData.firstSheetDate) {
+                    userData.firstSheetDate = new Date().toISOString();
+                }
+                saveUserData();
+                updateUI();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Export error:', error);
+                showToast('Export Failed', 'Please try again', '❌');
+            }
+        }
+
+        function startOver() {
+            document.getElementById('previewSection').classList.remove('active');
+            currentData = null;
+            document.getElementById('transcript').textContent = '';
+            document.getElementById('transcript').classList.remove('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===== ANALYTICS =====
+        function trackSheetCreation() {
+            // Track first-time achievement
+            if (userData.sheetsCreated === 0) {
+                showToast('First Sheet! 🎉', 'You\'re off to a great start!', '🎉');
+            }
+        }
+
+        // ===== UI HELPERS =====
+        function showToast(title, message, icon = '✅') {
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toast').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('toast').classList.remove('active');
+            }, 4000);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // ===== INIT ON LOAD =====
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
